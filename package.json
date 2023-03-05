@@ -1,0 +1,27 @@
+{
+  "name": "apim-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "apimctl.js",
+  "scripts": {
+    "build": "npx tsc",
+    "start": "npm run build && node dist/apimctl.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/dockerode": "^3.3.14",
+    "commander": "^10.0.0",
+    "dockerode": "^3.3.4",
+    "figlet": "^1.5.2",
+    "inquirer": "^8.2.5"
+  },
+  "devDependencies": {
+    "@types/figlet": "^1.5.5",
+    "@types/inquirer": "^9.0.3",
+    "@types/node": "^18.14.0",
+    "typescript": "^4.9.5"
+  }
+}
