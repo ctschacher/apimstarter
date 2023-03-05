@@ -1,9 +1,14 @@
+const fs = require('fs');
+// import path from 'path';
 const figlet = require("figlet");
 const inquirer = require('inquirer');
 const Docker = require('dockerode');
 const docker = new Docker({socketPath: '/var/run/docker.sock'});
 const { Command } = require("commander");
 const program = new Command();
+const dockerComposeFile = 'docker-compose.yml';
+
+const { elasticSearch, mongodb } = require('./services');
 
 program
 .version("1.0.0")
@@ -16,6 +21,67 @@ program
 
 const options = program.opts()
 console.log(figlet.textSync("APIM CTL"));
+
+function createFile(filename: string, content: string) {
+  try {
+    fs.writeFileSync(filename, content);
+  } catch (err) {
+    console.error(`Error creating file '${filename}': ${err}`);
+  }
+}
+
+const header = `
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+`;
+
+
+//TODO: implement 
+function getNetworks() {
+  let networks = `
+networks:
+  apim:
+    name: apim
+  storage:
+    name: storage\n\n`;
+  return networks
+}
+
+function getServices() {
+  let services = `services:`;
+  services += elasticSearch();
+  services += mongodb();
+  //if answers... 
+  return services;
+}
+
+//TODO: implement 
+function getVolumes() {
+  return `volumes:\n  data-elasticsearch:\n\n`
+}
+
+function buildDockerComposeFile(dockerComposeVersion = '3.8') {
+  let fileContent = header;
+  fileContent += `version: '${dockerComposeVersion}'\n`;
+  fileContent += getNetworks();
+  fileContent += getVolumes();
+  fileContent += getServices();
+  createFile(dockerComposeFile, fileContent);
+}
 
 inquirer
   .prompt([
@@ -41,14 +107,16 @@ inquirer
         name: 'finish',
         message: 'Ok, done! What do you want to do now',
         type: 'list',
-        choices: ['Install now', 'Generate a docker-compose.yml file']
+        choices: ['Start environment now', 'Generate a docker-compose.yml file']
     }
   ])
   .then((answers:any) => {
-    if(answers.finish === 'Install now') {
+    if(answers.finish === 'Start environment now') {
         console.log(`\n\nVersion ${answers.version} (${answers.edition}) and the following options: \n - ${answers.options.join('\n - ')} \n ... will be installed now`);
     } else {
-        console.log(`\n\nA docker-compose file for Version ${answers.version} (${answers.edition}) was generated.`);
+        console.log(`\n\nA docker-compose file ('${dockerComposeFile}') for Version ${answers.version} (${answers.edition}) was generated.\n\n`);
+        buildDockerComposeFile();
+        const fileContent = fs.readFileSync(dockerComposeFile, 'utf-8');
     }
   })
   .catch((error:any) => {
