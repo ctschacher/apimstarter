@@ -4,6 +4,8 @@ dist/**/*
 # Dependency directory
 node_modules
 
+docker-compose.yml
+
 # OS metadata
 .DS_Store
 Thumbs.db

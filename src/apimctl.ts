@@ -9,6 +9,8 @@ const program = new Command();
 const dockerComposeFile = 'docker-compose.yml';
 
 const { elasticSearch, mongodb } = require('./services');
+import {ComposeSpecification, DockerComposeFile} from './compose-interface'
+import YAML from 'yaml'
 
 program
 .version("1.0.0")
@@ -45,42 +47,37 @@ const header = `
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-
-`;
+#\n\n`;
 
 
-//TODO: implement 
-function getNetworks() {
-  let networks = `
-networks:
-  apim:
-    name: apim
-  storage:
-    name: storage\n\n`;
-  return networks
-}
+function buildDockerComposeFile(dockerComposeVersion = '3.8', database = 'mongodb') {
+  const jsonDockerCompose: ComposeSpecification = {
+    version: '3.8',
+    volumes: {
+      ...mongodb.volumes,
+      ...elasticSearch.volumes
+    },
+    networks: {
+      ...mongodb.networks,
+      ...elasticSearch.networks
+    },
+    services: {
+      database: mongodb.services,
+      elasticsearch: elasticSearch.services
+    }
+  };
 
-function getServices() {
-  let services = `services:`;
-  services += elasticSearch();
-  services += mongodb();
-  //if answers... 
-  return services;
-}
 
-//TODO: implement 
-function getVolumes() {
-  return `volumes:\n  data-elasticsearch:\n\n`
-}
+  // jsonDockerCompose.services = {};
+  // jsonDockerCompose.services.database = mongodb.services;
+  // jsonDockerCompose.services.elasticsearch = elasticSearch.services;
 
-function buildDockerComposeFile(dockerComposeVersion = '3.8') {
-  let fileContent = header;
-  fileContent += `version: '${dockerComposeVersion}'\n`;
-  fileContent += getNetworks();
-  fileContent += getVolumes();
-  fileContent += getServices();
-  createFile(dockerComposeFile, fileContent);
+  // jsonDockerCompose.volumes = {};
+  // jsonDockerCompose.volumes = mongodb.networks; 
+  // jsonDockerCompose.volumes = {...jsonDockerCompose.volumes, ...elasticSearch.volumes}
+
+  // createFile(dockerComposeFile, JSON.stringify(jsonDockerCompose));
+  createFile(dockerComposeFile, YAML.stringify(jsonDockerCompose));
 }
 
 inquirer
